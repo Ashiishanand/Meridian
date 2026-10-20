@@ -4,6 +4,7 @@ import com.meridian.dao.GoalDAO;
 import com.meridian.dao.TaskDAO;
 import com.meridian.model.Goal;
 import com.meridian.model.Task;
+import com.meridian.ui.TimeTrackingFrame;
 import com.meridian.model.User;
 import com.meridian.util.DatabaseConnection;
 
@@ -65,6 +66,7 @@ public class DashboardFrame extends JFrame {
             nav(sidebar, "My Goals", this::showGoals);
             nav(sidebar, "My Tasks", this::showTasks);
             nav(sidebar, "Daily Planner", this::showPlanner);
+            nav(sidebar, "Time Tracking", this::showTimeTracking);
         }
         sidebar.add(Box.createVerticalGlue());
         nav(sidebar, "Sign out", this::signOut);
@@ -255,7 +257,7 @@ public class DashboardFrame extends JFrame {
         }
     }
 
-    private void showGoals() {
+    private void showTimeTracking() {\n        new TimeTrackingFrame(user).setVisible(true);\n    }\n\n    private void showGoals() {
         content.removeAll();
         heading("My goals", "Set a target, keep it realistic, and update it as you go.");
         DefaultTableModel model = model("ID", "Goal", "Start date", "Target date", "Status");
