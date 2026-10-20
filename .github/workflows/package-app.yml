@@ -1,0 +1,28 @@
+name: Build downloadable app
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v4
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Build runnable JAR
+        run: mvn --batch-mode --no-transfer-progress clean package
+      - name: Upload runnable JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: meridian-desktop
+          path: target/meridian-1.0.0.jar
+          if-no-files-found: error
+          retention-days: 30
