@@ -22,6 +22,7 @@ import java.util.List;
  */
 public class DashboardFrame extends JFrame {
     private static final Color NAVY = new Color(27, 39, 72);
+    private static final Color NAV_BUTTON = new Color(43, 58, 96);
     private static final Color TEAL = new Color(24, 139, 148);
     private static final Color PAGE = new Color(244, 247, 251);
     private static final Color INK = new Color(36, 48, 70);
@@ -83,9 +84,13 @@ public class DashboardFrame extends JFrame {
         button.setPreferredSize(new Dimension(192, 42));
         button.setHorizontalAlignment(SwingConstants.LEFT);
         button.setFocusPainted(false);
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(false);
         button.setForeground(Color.WHITE);
-        button.setBackground(new Color(43, 58, 96));
+        button.setBackground(NAV_BUTTON);
         button.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 8));
+        button.setFont(new Font("SansSerif", Font.BOLD, 13));
         button.addActionListener(e -> action.run());
         sidebar.add(button);
         sidebar.add(Box.createVerticalStrut(8));
@@ -141,9 +146,7 @@ public class DashboardFrame extends JFrame {
     private JPanel statCard(String label, String value) {
         JPanel card = new JPanel(new BorderLayout(8, 12));
         card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(224, 230, 239)),
-                new EmptyBorder(18, 18, 18, 18)));
+        card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(224, 230, 239)), new EmptyBorder(18, 18, 18, 18)));
         JLabel number = new JLabel(value);
         number.setFont(new Font("SansSerif", Font.BOLD, 30));
         number.setForeground(TEAL);
@@ -175,16 +178,14 @@ public class DashboardFrame extends JFrame {
         int pending = intCount("SELECT COUNT(*) FROM tasks WHERE user_id=? AND status='PENDING'", user.id());
         int progress = intCount("SELECT COUNT(*) FROM tasks WHERE user_id=? AND status='IN_PROGRESS'", user.id());
         int done = intCount("SELECT COUNT(*) FROM tasks WHERE user_id=? AND status='COMPLETED'", user.id());
-        JPanel panel = chartCard("Task status", new PieChart(pending, progress, done));
-        return panel;
+        return chartCard("Task status", new PieChart(pending, progress, done));
     }
 
     private JPanel buildGoalChart() {
         int notStarted = intCount("SELECT COUNT(*) FROM goals WHERE user_id=? AND status='NOT_STARTED'", user.id());
         int inProgress = intCount("SELECT COUNT(*) FROM goals WHERE user_id=? AND status='IN_PROGRESS'", user.id());
         int completed = intCount("SELECT COUNT(*) FROM goals WHERE user_id=? AND status='COMPLETED'", user.id());
-        JPanel panel = chartCard("Goal progress", new BarChart(notStarted, inProgress, completed));
-        return panel;
+        return chartCard("Goal progress", new BarChart(notStarted, inProgress, completed));
     }
 
     private JPanel chartCard(String title, JComponent chart) {
@@ -233,7 +234,6 @@ public class DashboardFrame extends JFrame {
 
     private static class BarChart extends JPanel {
         private final int[] values;
-        private final String[] labels = {"Not started", "In progress", "Completed"};
         private final Color[] colors = {new Color(239, 177, 74), new Color(82, 142, 222), new Color(49, 166, 126)};
         BarChart(int a, int b, int c) { values = new int[]{a, b, c}; setOpaque(false); }
         @Override protected void paintComponent(Graphics graphics) {
@@ -260,15 +260,14 @@ public class DashboardFrame extends JFrame {
         heading("My goals", "Set a target, keep it realistic, and update it as you go.");
         DefaultTableModel model = model("ID", "Goal", "Start date", "Target date", "Status");
         try {
-            for (Goal goal : goalDAO.findByUser(user.id()))
-                model.addRow(new Object[]{goal.id(), goal.title(), goal.startDate(), goal.targetDate(), goal.status()});
+            for (Goal goal : goalDAO.findByUser(user.id())) model.addRow(new Object[]{goal.id(), goal.title(), goal.startDate(), goal.targetDate(), goal.status()});
         } catch (SQLException ex) { showError("Could not load your goals", ex); }
         JTable table = table(model);
-        JButton add = actionButton("Add goal", e -> addGoal());
-        JButton status = actionButton("Update status", e -> updateGoalStatus(table));
-        JButton delete = actionButton("Delete selected", e -> deleteGoal(table));
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        actions.setOpaque(false); actions.add(add); actions.add(status); actions.add(delete);
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        actions.setOpaque(false);
+        actions.add(actionButton("Add goal", e -> addGoal()));
+        actions.add(actionButton("Update status", e -> updateGoalStatus(table)));
+        actions.add(actionButton("Delete selected", e -> deleteGoal(table)));
         JPanel panel = new JPanel(new BorderLayout(10, 12)); panel.setOpaque(false);
         panel.add(new JScrollPane(table), BorderLayout.CENTER); panel.add(actions, BorderLayout.SOUTH);
         content.add(panel, BorderLayout.CENTER); refresh();
@@ -286,10 +285,9 @@ public class DashboardFrame extends JFrame {
         form.add(new JLabel("Target date (YYYY-MM-DD)")); form.add(target);
         if (JOptionPane.showConfirmDialog(this, form, "Add a goal", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
         try {
-            goalDAO.create(user.id(), title.getText(), description.getText(),
-                    LocalDate.parse(start.getText().trim()), LocalDate.parse(target.getText().trim()));
+            goalDAO.create(user.id(), title.getText(), description.getText(), LocalDate.parse(start.getText().trim()), LocalDate.parse(target.getText().trim()));
             showGoals();
-        } catch (IllegalArgumentException | DateTimeParseException ex) {
+        } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Check the details", JOptionPane.WARNING_MESSAGE);
         } catch (SQLException ex) { showError("Could not save the goal", ex); }
     }
@@ -298,8 +296,7 @@ public class DashboardFrame extends JFrame {
         int row = table.getSelectedRow();
         if (row < 0) { notice("Select a goal first."); return; }
         String[] options = {"NOT_STARTED", "IN_PROGRESS", "COMPLETED", "ON_HOLD"};
-        String status = (String) JOptionPane.showInputDialog(this, "Choose the new status:", "Goal status",
-                JOptionPane.PLAIN_MESSAGE, null, options, table.getValueAt(row, 4));
+        String status = (String) JOptionPane.showInputDialog(this, "Choose the new status:", "Goal status", JOptionPane.PLAIN_MESSAGE, null, options, table.getValueAt(row, 4));
         if (status == null) return;
         try { goalDAO.updateStatus(user.id(), ((Number)table.getValueAt(row,0)).longValue(), status); showGoals(); }
         catch (SQLException | IllegalArgumentException ex) { showError("Could not update the goal", ex); }
@@ -308,8 +305,7 @@ public class DashboardFrame extends JFrame {
     private void deleteGoal(JTable table) {
         int row = table.getSelectedRow();
         if (row < 0) { notice("Select a goal first."); return; }
-        if (JOptionPane.showConfirmDialog(this, "Delete this goal? Related tasks will remain but lose their goal link.",
-                "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        if (JOptionPane.showConfirmDialog(this, "Delete this goal? Related tasks will remain but lose their goal link.", "Confirm delete", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
         try { goalDAO.delete(user.id(), ((Number)table.getValueAt(row,0)).longValue()); showGoals(); }
         catch (SQLException ex) { showError("Could not delete the goal", ex); }
     }
@@ -320,15 +316,14 @@ public class DashboardFrame extends JFrame {
         DefaultTableModel model = model("ID", "Task", "Due date", "Priority", "Status", "Goal ID");
         try {
             List<Task> tasks = taskDAO.findByUser(user.id());
-            for (Task task : tasks) model.addRow(new Object[]{task.id(), task.title(), task.dueDate(),
-                    task.priority(), task.status(), task.goalId() == null ? "—" : task.goalId()});
+            for (Task task : tasks) model.addRow(new Object[]{task.id(), task.title(), task.dueDate(), task.priority(), task.status(), task.goalId() == null ? "—" : task.goalId()});
         } catch (SQLException ex) { showError("Could not load your tasks", ex); }
         JTable table = table(model);
-        JButton add = actionButton("Add task", e -> addTask());
-        JButton status = actionButton("Update status", e -> updateTaskStatus(table));
-        JButton delete = actionButton("Delete selected", e -> deleteTask(table));
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        actions.setOpaque(false); actions.add(add); actions.add(status); actions.add(delete);
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        actions.setOpaque(false);
+        actions.add(actionButton("Add task", e -> addTask()));
+        actions.add(actionButton("Update status", e -> updateTaskStatus(table)));
+        actions.add(actionButton("Delete selected", e -> deleteTask(table)));
         JPanel panel = new JPanel(new BorderLayout(10, 12)); panel.setOpaque(false);
         panel.add(new JScrollPane(table), BorderLayout.CENTER); panel.add(actions, BorderLayout.SOUTH);
         content.add(panel, BorderLayout.CENTER); refresh();
@@ -339,8 +334,7 @@ public class DashboardFrame extends JFrame {
         JTextArea description = new JTextArea(3, 24);
         JTextField due = new JTextField(LocalDate.now().plusDays(1).toString(), 12);
         JTextField goalId = new JTextField(8);
-        String[] priorities = {"LOW", "MEDIUM", "HIGH"};
-        JComboBox<String> priority = new JComboBox<>(priorities);
+        JComboBox<String> priority = new JComboBox<>(new String[]{"LOW", "MEDIUM", "HIGH"});
         JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
         form.add(new JLabel("Task title")); form.add(title);
         form.add(new JLabel("Description")); form.add(new JScrollPane(description));
@@ -349,15 +343,13 @@ public class DashboardFrame extends JFrame {
         form.add(new JLabel("Priority")); form.add(priority);
         if (JOptionPane.showConfirmDialog(this, form, "Add a task", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
         try {
-            String dueText = due.getText().trim();
-            String goalText = goalId.getText().trim();
+            String dueText = due.getText().trim(), goalText = goalId.getText().trim();
             LocalDate date = dueText.isEmpty() ? null : LocalDate.parse(dueText);
             Long linkedGoal = goalText.isEmpty() ? null : Long.parseLong(goalText);
             taskDAO.create(user.id(), linkedGoal, title.getText(), description.getText(), date, (String)priority.getSelectedItem());
             showTasks();
-        } catch (IllegalArgumentException | DateTimeParseException ex) {
-            JOptionPane.showMessageDialog(this, "Check the title, date, and goal ID. " + ex.getMessage(),
-                    "Check the details", JOptionPane.WARNING_MESSAGE);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, "Check the title, date, and goal ID. " + ex.getMessage(), "Check the details", JOptionPane.WARNING_MESSAGE);
         } catch (SQLException ex) { showError("Could not save the task", ex); }
     }
 
@@ -365,8 +357,7 @@ public class DashboardFrame extends JFrame {
         int row = table.getSelectedRow();
         if (row < 0) { notice("Select a task first."); return; }
         String[] options = {"PENDING", "IN_PROGRESS", "COMPLETED"};
-        String status = (String) JOptionPane.showInputDialog(this, "Choose the new status:", "Task status",
-                JOptionPane.PLAIN_MESSAGE, null, options, table.getValueAt(row, 4));
+        String status = (String) JOptionPane.showInputDialog(this, "Choose the new status:", "Task status", JOptionPane.PLAIN_MESSAGE, null, options, table.getValueAt(row, 4));
         if (status == null) return;
         try { taskDAO.updateStatus(user.id(), ((Number)table.getValueAt(row,0)).longValue(), status); showTasks(); }
         catch (SQLException | IllegalArgumentException ex) { showError("Could not update the task", ex); }
@@ -387,14 +378,12 @@ public class DashboardFrame extends JFrame {
         String sql = "SELECT task_id,title,due_date,priority,status FROM tasks WHERE user_id=? AND status<>'COMPLETED' AND (due_date IS NULL OR due_date<=?) ORDER BY due_date IS NULL,due_date";
         try (Connection c = DatabaseConnection.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
             p.setLong(1, user.id()); p.setDate(2, Date.valueOf(LocalDate.now()));
-            try (ResultSet r = p.executeQuery()) {
-                while (r.next()) model.addRow(new Object[]{r.getLong(1), r.getString(2), r.getDate(3), r.getString(4), r.getString(5)});
-            }
+            try (ResultSet r = p.executeQuery()) { while (r.next()) model.addRow(new Object[]{r.getLong(1), r.getString(2), r.getDate(3), r.getString(4), r.getString(5)}); }
         } catch (SQLException ex) { showError("Could not load the planner", ex); }
         JTable table = table(model);
-        JButton update = actionButton("Update selected task", e -> updateTaskStatus(table));
         JPanel panel = new JPanel(new BorderLayout(8, 10)); panel.setOpaque(false);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER); panel.add(update, BorderLayout.SOUTH);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.add(actionButton("Update selected task", e -> updateTaskStatus(table)), BorderLayout.SOUTH);
         content.add(panel, BorderLayout.CENTER); refresh();
     }
 
@@ -405,13 +394,12 @@ public class DashboardFrame extends JFrame {
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement("SELECT user_id,full_name,email,role,account_status,created_at FROM users ORDER BY created_at DESC");
              ResultSet r = p.executeQuery()) {
-            while (r.next()) model.addRow(new Object[]{r.getLong(1), r.getString(2), r.getString(3),
-                    r.getString(4), r.getString(5), r.getTimestamp(6)});
+            while (r.next()) model.addRow(new Object[]{r.getLong(1), r.getString(2), r.getString(3), r.getString(4), r.getString(5), r.getTimestamp(6)});
         } catch (SQLException ex) { showError("Could not load users", ex); }
         JTable table = table(model);
-        JButton reload = actionButton("Refresh", e -> showUsers());
         JPanel panel = new JPanel(new BorderLayout(8, 10)); panel.setOpaque(false);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER); panel.add(reload, BorderLayout.SOUTH);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.add(actionButton("Refresh", e -> showUsers()), BorderLayout.SOUTH);
         content.add(panel, BorderLayout.CENTER); refresh();
     }
 
@@ -449,8 +437,12 @@ public class DashboardFrame extends JFrame {
     private JButton actionButton(String label, java.awt.event.ActionListener action) {
         JButton button = new JButton(label);
         button.setFocusPainted(false);
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(false);
         button.setBackground(TEAL);
         button.setForeground(Color.WHITE);
+        button.setFont(new Font("SansSerif", Font.BOLD, 13));
         button.setBorder(BorderFactory.createEmptyBorder(9, 14, 9, 14));
         button.addActionListener(action);
         return button;
