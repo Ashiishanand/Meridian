@@ -43,3 +43,17 @@ CREATE TABLE IF NOT EXISTS tasks (
   INDEX idx_tasks_user_status (user_id, status),
   INDEX idx_tasks_due_date (due_date)
 );
+
+CREATE TABLE IF NOT EXISTS time_entries (
+  entry_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  goal_id BIGINT NOT NULL,
+  start_time DATETIME NOT NULL,
+  end_time DATETIME NOT NULL,
+  notes VARCHAR(255),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_time_entries_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  CONSTRAINT fk_time_entries_goal FOREIGN KEY (goal_id) REFERENCES goals(goal_id) ON DELETE CASCADE,
+  CONSTRAINT chk_time_entry_duration CHECK (end_time > start_time),
+  INDEX idx_time_entries_user_start (user_id, start_time)
+);
