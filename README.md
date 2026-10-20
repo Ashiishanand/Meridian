@@ -1,80 +1,93 @@
 # Meridian
-## Time Management and Goal Setting Tool
+### Time Management and Goal Setting Tool
 
-Meridian is a Java desktop project for organizing goals and tasks. It uses Java Swing for its interface, JDBC for database access, and MySQL for persistent storage. The application includes role-aware user and administrator dashboards.
+Meridian is a small Java desktop app built to make everyday planning a bit easier. The idea is straightforward: keep goals, tasks, due dates, and progress in one place instead of spreading them across notes and reminders.
 
-> **Development status:** Initial foundation committed. Authentication, registration, initial dashboard, administrator user listing/report counts, database schema, and password hashing are present. Goal/task CRUD, account activation controls, and planner workflows are still in development and must not yet be considered complete.
+This is a student project, so the focus is on clear Java code, a working database connection, and features that are easy to demonstrate and explain.
 
-## Technology
-- Java 17+
-- Maven
-- Java Swing
-- MySQL 8+
-- MySQL Workbench
-- MySQL Connector/J (managed by Maven)
+## What it includes
 
-## Windows setup (VS Code)
+- Create an account and sign in.
+- Separate user and administrator views.
+- Add goals, set dates, update progress, and remove goals.
+- Add tasks, set a priority and due date, link a task to one of your goals, and update its status.
+- See a daily planner for open tasks due today or earlier.
+- View dashboard counts and simple task/goal charts.
+- Open an admin user list and a basic system report.
 
-1. Install a JDK (17 or later), Maven, MySQL Server, and Visual Studio Code.
-2. In VS Code, install the **Extension Pack for Java**.
-3. Open MySQL Workbench and connect to your local MySQL Server.
-4. Open and execute `database/schema.sql` in a Workbench SQL tab.
-5. Set database credentials in a Windows terminal. Replace the example password with your MySQL password:
+**Please test these workflows on your own machine before submitting.** The dashboard and login were previously run locally; the latest goal/task screens and charts should be compiled and checked after pulling the newest commit.
 
-   PowerShell:
-   ```powershell
-   $env:MERIDIAN_DB_USER = "root"
-   $env:MERIDIAN_DB_PASSWORD = "YOUR_MYSQL_PASSWORD"
-   ```
+## Built with
+- Java 17 or newer
+- Java Swing for the desktop screens
+- JDBC and MySQL for saving data
+- Maven to build and run the project
 
-   The default connection URL is `jdbc:mysql://localhost:3306/meridian_db?useSSL=false&serverTimezone=UTC`. Override it with `MERIDIAN_DB_URL` if your MySQL server uses a different host or port.
+## Set it up on Windows
 
-6. From the repository root, run:
+### 1. Get the project
+Clone the repository or download it from GitHub, then open the `meridian` folder in VS Code.
 
-   ```powershell
-   mvn clean compile
-   mvn exec:java
-   ```
+### 2. Prepare the database
+Open MySQL Workbench, connect to your local MySQL Server, and run the script at `database/schema.sql`. It creates the `meridian_db` database and its three tables: `users`, `goals`, and `tasks`.
 
-   Maven downloads the JDBC driver and required build plugins.
+### 3. Set your database login
+In PowerShell, set the username and password for the current terminal. Replace the example values with your local MySQL details:
 
-## First run and roles
-- Use **Create account** to register.
-- In a newly created, empty database, the first account receives the `ADMIN` role; later accounts receive `USER`.
-- Sign in using the credentials you registered.
-- Do not use a real or reused password for a student demo.
-- The first-account rule is suitable only for a local demo database. A deployed application should provision administrators through a controlled setup procedure.
+```powershell
+$env:MERIDIAN_DB_USER = "root"
+$env:MERIDIAN_DB_PASSWORD = "your_local_mysql_password"
+```
 
-## Database tables
-- `users`: identity, password hash/salt, role, and account status.
-- `goals`: personal goals and target dates.
-- `tasks`: task deadlines, priorities, statuses, and optional goal association.
+The default connection URL is:
 
-## Project structure
+```text
+jdbc:mysql://localhost:3306/meridian_db?useSSL=false&serverTimezone=UTC
+```
+
+If your MySQL server uses a different host or port, set `MERIDIAN_DB_URL` too. Keep your real database password out of source files and GitHub.
+
+### 4. Build and start the app
+From the project folder, run:
+
+```powershell
+mvn clean compile
+mvn exec:java
+```
+
+Maven downloads the project dependencies on the first run. If `mvn` is not on your PATH, run the `mvn.cmd` file from your local Maven `bin` folder instead.
+
+## First login
+On a fresh, empty database, the first registered account is assigned the `ADMIN` role. Later registrations get the `USER` role. This makes the initial classroom demo easy to set up, but it is not a suitable admin-provisioning method for a public deployment.
+
+Use a demo password that you do not use for any other account.
+
+## Project layout
 ```text
 src/main/java/com/meridian/
-  Main.java
-  model/User.java
-  service/AuthService.java
-  ui/LoginFrame.java
-  ui/DashboardFrame.java
-  util/DatabaseConnection.java
-  util/PasswordUtil.java
+  dao/       Database operations for goals and tasks
+  model/     User, Goal, and Task data records
+  service/   Registration and login logic
+  ui/        Login and dashboard screens
+  util/      Database connection and password hashing
 database/schema.sql
 docs/architecture.md
+docs/SUBMISSION_CHECKLIST.md
 pom.xml
 ```
 
-## Security notes
-- Passwords are hashed with PBKDF2-HMAC-SHA256 and per-password random salts.
-- SQL queries use prepared statements.
-- Never commit database passwords or personal account data.
-- Admin UI visibility is role-based. Any future admin-changing operations must also enforce authorization in service/database operations, not only by hiding UI controls.
+## A few implementation notes
+- Passwords are stored as PBKDF2-HMAC-SHA256 hashes with random salts, not as plain text.
+- SQL values are passed using prepared statements.
+- Goal and task queries are scoped to the signed-in user's ID.
+- The dashboard uses lightweight Swing-drawn charts, so there is no extra chart library to install.
 
-## Current limitations
-- Goal and task screens are not implemented yet.
-- The admin panel currently provides a user listing and basic aggregate report, but account activation/deactivation is not implemented yet.
-- Automated tests and submission presentation materials are still to be added.
+## Before handing it in
+1. Run `mvn clean compile` and then launch the app.
+2. Sign in as a normal user, create a goal and task, change their statuses, and confirm the dashboard counts/charts update.
+3. Sign in with the admin account and check the user list and system report.
+4. Capture screenshots from the real running app. Do not label a mockup as an actual screenshot.
+5. Check the GitHub repository for passwords, local paths, or private user information before submitting.
 
 ## Repository
 https://github.com/ashiishanand/meridian
