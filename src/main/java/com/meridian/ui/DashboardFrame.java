@@ -257,7 +257,11 @@ public class DashboardFrame extends JFrame {
         }
     }
 
-    private void showTimeTracking() {\n        new TimeTrackingFrame(user).setVisible(true);\n    }\n\n    private void showGoals() {
+    private void showTimeTracking() {
+        new TimeTrackingFrame(user).setVisible(true);
+    }
+
+    private void showGoals() {
         content.removeAll();
         heading("My goals", "Set a target, keep it realistic, and update it as you go.");
         DefaultTableModel model = model("ID", "Goal", "Start date", "Target date", "Status");
