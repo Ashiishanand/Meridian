@@ -1,8 +1,5 @@
 # Meridian
-
 Make Time. Move Forward.
-
-Java Programming project, Galgotias University, B.Tech CSE, Semester III, Section 18, Batch 2025-2029.
 
 Meridian is a time management and goal setting tool built with Java Servlets, JSP and MySQL. Users set personal goals, log the time they spend on them and watch their progress. Admins configure goal types, manage user accounts and monitor how the tool is used.
 
@@ -74,7 +71,7 @@ The architecture, use case and database diagrams are in [docs/DESIGN.md](docs/DE
 ## Team
 | Name | Admission No. | Role |
 |------|---------------|------|
-| Ashish Anand | 25SCSE11011359 | Team Leader |
+| Ashish Anand | 25SCSE1011359 | Team Leader |
 | Divyanshu Raj | 25SCSE1011398 | Member |
 | Raj Kumar | 25SCSE1011351 | Member |
 | Aman Raz | 25SCSE1011372 | Member |
